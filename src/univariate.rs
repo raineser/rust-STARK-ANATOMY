@@ -41,4 +41,6 @@ impl Polynomial {
         }
 
     }
+
+    pub fn evaluate(self, point: i128) -> 
 }
