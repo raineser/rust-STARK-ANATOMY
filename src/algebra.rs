@@ -28,23 +28,27 @@ pub fn xgcd(x: i64, y: i64) -> (i64,i64,i64) {
 #[derive(Debug)]
 pub struct FieldElement {
 
-    pub value: U256,
-    field: u128
+    pub value: U256
 }
 
 impl FieldElement {
 
-    pub fn new(val: u128) -> FieldElement {
-        return FieldElement{value: U256::from(val), field: P};
+    pub fn new(val: U256) -> FieldElement {
+        return FieldElement{value: val};
     }
 
     pub fn zero(&self) -> FieldElement {
-        return FieldElement{value: U256::from(0 as u32), field: P};
+        return FieldElement{value: U256::from(0 as u32)};
     }
 
     pub fn one(&self) -> FieldElement {
-        return FieldElement{value: U256::from(1 as u32), field: P};
+        return FieldElement{value: U256::from(1 as u32)};
     }
+
+    pub fn generator() -> FieldElement {
+        return  FieldElement::new(U256::from(85408008396924667383611388730472331217 as u128));
+    }
+
 
 }
 
@@ -54,7 +58,7 @@ impl ops::Add<FieldElement> for FieldElement {
 
     fn add(self, rhs: FieldElement) -> Self::Output {
         
-        FieldElement {value: (self.value + rhs.value) % P, field: P}
+        FieldElement {value: (self.value + rhs.value) % P}
    
     }
 }
@@ -64,7 +68,7 @@ impl ops::Mul<FieldElement> for FieldElement {
 
     fn mul(self, rhs: FieldElement) -> Self::Output {
         
-        FieldElement {value: (self.value * rhs.value) % P, field: P}
+        FieldElement {value: (self.value * rhs.value) % P}
     }
 }
 
@@ -73,6 +77,7 @@ impl ops::Sub<FieldElement> for FieldElement {
 
     fn sub(self, rhs: FieldElement) -> Self::Output {
         
-        FieldElement {value: (self.value - rhs.value) % P, field: P}
+        FieldElement {value: (self.value - rhs.value) % P}
     }
 }
+
