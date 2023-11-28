@@ -1,46 +1,76 @@
-use ethnum::U256;
-use crate::algebra;
+use std::cmp;
 
-
+#[derive(Debug)]
 pub struct Polynomial {
 
-    pub coefs: Vec<algebra::FieldElement>
+    pub coefs: Vec<FieldElement>
 
 }
 
 impl Polynomial {
 
-    pub fn new(coefs: &Vec<U256> ) -> Polynomial{
-
-        let mut c: Vec<algebra::FieldElement> = vec![];
-        for i in coefs {
-
-            c.push( algebra::FieldElement::new(i.clone() ));
-
-        }
-
+    fn new (c: Vec<FieldElement>) -> Polynomial {
         return Polynomial{coefs: c};
-
     }
-
-    pub fn degree(self) -> i128 {
-
+    
+    fn degree(&self) -> i128 {
         if self.coefs.len() == 0 {
-            return -1;
-        } else if self.coefs[0].value  == 0 {
-            return -1;
-        } else  {
-
-            let mut maxindex = 0;
-            for i in 0..self.coefs.len() {
-                if self.coefs[i].value != 0 {
-                    maxindex = i as i128;
-                }
-            }
-            return maxindex;
+            return -1 as i128;
         }
-
+        
+        let zero = FieldElement::zero();
+        
+        if self.coefs == vec![zero; self.coefs.len()]{
+            return -2 as i128
+        }
+        
+        let mut max = 0;
+        for i in 0..self.coefs.len() {
+            if self.coefs[i] != zero {
+                max = i;
+            }
+        }
+        
+        return max as i128;
     }
+}
+    
+impl ops::Neg for Polynomial {
+    
+    type Output = Polynomial;
+    
+    fn neg(self) -> Polynomial {
+    
+        let mut n = self.coefs.clone();
+        
+        for i in 0..n.len() {
+            n[i] = -n[i];
+        }
+        
+        return Polynomial::new(n);
+    }
+}
 
-    pub fn evaluate(self, point: i128) -> 
+impl ops::Add for Polynomial {
+    type Output = Polynomial;
+    
+    fn add(self, rhs: Polynomial) -> Polynomial {
+        
+        if self.degree() == -1 {
+            return rhs;
+        }
+        
+        if rhs.degree() == -1 {
+            return Self;
+        }
+        
+        let mut coeffs = vec![FieldElement::zero(); cmp::max(self.coefs.len(), rhs.coefs.len())];
+        
+        
+        for i in 0..self.coefs.len() {
+            coeffs[i] = coeff[i] + self.coefs[i];
+        }
+        
+        
+    }
 }
