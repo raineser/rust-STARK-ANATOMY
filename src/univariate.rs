@@ -1,5 +1,3 @@
-use std::cmp;
-
 #[derive(Debug)]
 pub struct Polynomial {
 
@@ -33,6 +31,22 @@ impl Polynomial {
         
         return max as i128;
     }
+    
+    fn is_zero(&self) -> bool {
+        if self.degree() == -1 {
+            return true;
+        }
+        return false;
+    }
+    
+    fn leading_coefficient(&self) -> FieldElement {
+        
+        if self.degree() == -1 {
+            return FieldElement::zero()
+        }
+    
+        return self.coefs[self.degree() as usize].clone();
+    }
 }
     
 impl ops::Neg for Polynomial {
@@ -61,16 +75,78 @@ impl ops::Add for Polynomial {
         }
         
         if rhs.degree() == -1 {
-            return Self;
+            return self;
         }
         
         let mut coeffs = vec![FieldElement::zero(); cmp::max(self.coefs.len(), rhs.coefs.len())];
         
-        
         for i in 0..self.coefs.len() {
-            coeffs[i] = coeff[i] + self.coefs[i];
+            coeffs[i] = coeffs[i] + self.coefs[i];
         }
         
+        println!("{:?}", self.coefs);
+        
+        for i in 0..rhs.coefs.len() {
+            coeffs[i] = coeffs[i] + rhs.coefs[i];
+        }
+        
+        return Polynomial::new(coeffs);
         
     }
+}
+
+impl ops::Sub for Polynomial {
+    type Output = Polynomial;
+    
+    fn sub(self, rhs: Polynomial) -> Polynomial {
+        
+        return self + -rhs;
+    }
+}
+
+impl ops::Mul for Polynomial {
+    type Output = Polynomial;
+    
+    fn mul(self, rhs: Polynomial) -> Polynomial {
+        
+        if self.coefs.len() == 0 || rhs.coefs.len() == 0 {
+            return Polynomial::new(vec![]);
+        }
+        let mut buf = vec![FieldElement::zero(); (self.coefs.len() + rhs.coefs.len() -1)];
+        
+        for i in 0..self.coefs.len() {
+            if self.coefs[i].is_zero() {
+                continue;
+            }
+            
+            for j in 0..rhs.coefs.len() {
+                buf[i+j] = buf[i+j] + self.coefs[i] * rhs.coefs[j];
+            }
+        }
+        
+        return Polynomial::new(buf);
+    }
+    
+}
+
+impl PartialEq for Polynomial  {
+    
+    
+    fn eq(&self, other: &Self) -> bool {
+        if self.degree() != other.degree() {
+            return false; 
+        }
+        if self.degree() == -1 {
+            return false;
+        }
+        
+        for i in 0..self.coefs.len() {
+            if self.coefs[i] != other.coefs[i] {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
 }
