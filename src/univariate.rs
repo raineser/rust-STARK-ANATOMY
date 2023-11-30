@@ -1,3 +1,4 @@
+use std::cmp;
 
 #[derive(Debug, Clone)]
 pub struct Polynomial {
@@ -49,7 +50,7 @@ impl Polynomial {
         return self.coefs[self.degree() as usize].clone();
     }
     
-    /*
+    
     
     fn divide(&self, d: &Polynomial) -> (Polynomial, Polynomial) {
         
@@ -76,13 +77,14 @@ impl Polynomial {
             
             let mut s  = vec![FieldElement::zero(); shift as usize];
             s.push(coefficient)
-            let subtractee = Polynomial::new()
+            let subtractee = Polynomial::new(s) * d;
+            
             
         }
         
         return (Polynomial::new(vec![]), Polynomial::new(vec![]));
     }
-    */
+    
 }
     
 impl ops::Neg for Polynomial {
@@ -186,5 +188,3 @@ impl PartialEq for Polynomial  {
     }
     
 }
-
-//https://github.com/facebook/winterfell/bl
