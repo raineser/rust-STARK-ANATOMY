@@ -3,6 +3,7 @@ use rand::Rng;
 
 const P:u128 = 1 + 407 * ( 1 << 119 );
 
+
 #[derive(Debug, Copy, Clone)]
 struct FieldElement {
     pub value: u128,
@@ -27,7 +28,7 @@ impl FieldElement {
         return FieldElement::new(85408008396924667383611388730472331217);
     }
     
-    pub fn primitive_nth_root(self, n:u128) -> FieldElement {
+    pub fn primitive_nth_root(&self, n:u128) -> FieldElement {
         
         assert!(n <= 1 << 119 && (n & (n-1)) == 0);
         let mut root = FieldElement::generator();
@@ -45,6 +46,10 @@ impl FieldElement {
         let mut rng = rand::thread_rng();
         return FieldElement::new(rng.gen_range(1..P));
         
+    }
+    
+    pub fn is_zero(&self) -> bool {
+        return self.value == 0;
     }
 }
 
@@ -67,7 +72,7 @@ impl ops::Mul<FieldElement> for FieldElement {
     type Output = FieldElement;
     
     //https://stackoverflow.com/questions/12168348/ways-to-do-modulo-multiplication-with-primitive-types
-    fn mul(self, rhs:FieldElement) -> FieldElement {
+    fn mul(self, rhs: FieldElement) -> FieldElement {
         
         let mut a = self.value;
         let mut b = rhs.value;
@@ -138,6 +143,25 @@ impl ops::BitXor<u128> for FieldElement {
         
         return acc;
     }
+}
+
+impl ops::Div for FieldElement {
+    type Output = FieldElement;
+    
+    fn div(self, rhs: FieldElement) -> FieldElement {
+        
+        let a  = FieldElement::new( inv(rhs.value) );
+        return self * a;
+    } 
+}
+
+impl PartialEq for FieldElement  {
+    
+    fn eq(&self, other: &Self) -> bool {
+        
+        return self.value == other.value;
+    }
+    
 }
 
 //https://github.com/facebook/winterfell/blob/main/math/src/field/f128/mod.rs
