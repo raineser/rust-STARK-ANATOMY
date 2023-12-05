@@ -1,6 +1,6 @@
 use std::cmp;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Polynomial {
 
     pub coefs: Vec<FieldElement>
@@ -64,26 +64,47 @@ impl Polynomial {
         
         let mut remainder = Polynomial::new(self.coefs.clone());
         
-        let mut quotient_coefficients = Polynomial::new(vec![FieldElement::zero(); (self.degree() - d.degree() + 1) as usize]);
+        let mut quotient_coefficients = vec![FieldElement::zero(); (self.degree() - d.degree() + 1) as usize];
         
         for i in 0..(self.degree() - d.degree() + 1) as usize {
-            if remainder.degree() < denominator.degree() {
+            if remainder.degree() < d.degree() {
                 break;
             }
             
-            let coefficient = remainder.leading_coefficient() / denominator.leading_coefficient();
-            let shift = remainder.degree() - denominator.degree();
-            
+            let coefficient = remainder.leading_coefficient() / d.leading_coefficient();
+            let shift = remainder.degree() - d.degree();
             
             let mut s  = vec![FieldElement::zero(); shift as usize];
-            s.push(coefficient)
+            s.push(coefficient);
             let subtractee = Polynomial::new(s) * d;
             
-            
+            quotient_coefficients[shift as usize] = coefficient;
+            remainder = remainder - subtractee;
         }
         
-        return (Polynomial::new(vec![]), Polynomial::new(vec![]));
+        return (Polynomial::new(quotient_coefficients.clone()), remainder);
     }
+    
+    pub fn evaluate(&self, point: FieldElement) ->  FieldElement {
+        let mut xi = FieldElement::one();
+        let mut value = FieldElement::zero(); 
+        
+        for i in 0..self.coefs.len() {
+            value = value + self.coefs[i] * xi;
+            xi  = xi * point
+        }
+        value
+    }
+    
+    pub fn evaluate_domain(&self, domain: &Vec<FieldElement> ) -> Vec<FieldElement> {
+        let mut values: Vec<FieldElement> = vec![];
+        
+        for i in 0..domain.len() {
+            values.push(self.evaluate(domain[i]));
+        }
+        values
+    }
+    
     
 }
     
@@ -164,11 +185,56 @@ impl ops::Mul for Polynomial {
         
         return Polynomial::new(buf);
     }
+}
+
+impl ops::Mul<&Polynomial> for Polynomial {
+    type Output = Polynomial; 
+    
+     
+    fn mul(self, rhs: &Polynomial) -> Polynomial {
+        
+        if self.coefs.len() == 0 || rhs.coefs.len() == 0 {
+            return Polynomial::new(vec![]);
+        }
+        let mut buf = vec![FieldElement::zero(); (self.coefs.len() + rhs.coefs.len() -1)];
+        
+        for i in 0..self.coefs.len() {
+            if self.coefs[i].is_zero() {
+                continue;
+            }
+            
+            for j in 0..rhs.coefs.len() {
+                buf[i+j] = buf[i+j] + self.coefs[i] * rhs.coefs[j];
+            }
+        }
+        
+        return Polynomial::new(buf);
+    }
     
 }
 
-impl PartialEq for Polynomial  {
+impl ops::Div for Polynomial {
+    type Output = Polynomial;
     
+    fn div (self, rhs: Polynomial) -> Polynomial {
+        let (quo, rem) = self.divide(&rhs);
+        assert!(!rem.is_zero());
+        quo 
+    }
+}
+
+impl ops::Rem for Polynomial {
+    type Output = Polynomial;
+    
+    fn rem(self, rhs: Polynomial) -> Polynomial {
+        let (_, rem) = self.divide(&rhs);
+        rem
+    }
+}
+
+
+
+impl PartialEq for Polynomial  {
     
     fn eq(&self, other: &Self) -> bool {
         if self.degree() != other.degree() {
