@@ -1,6 +1,6 @@
 use std::cmp;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Polynomial {
 
     pub coefs: Vec<FieldElement>
