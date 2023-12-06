@@ -51,6 +51,12 @@ impl FieldElement {
     pub fn is_zero(&self) -> bool {
         return self.value == 0;
     }
+    
+    pub fn inverse(self) -> FieldElement {
+        let a = inv(self.value);
+        assert!(FieldElement::new(a) * self == FieldElement::one());
+        return FieldElement::new(a);
+    }
 }
 
 impl ops::Add<FieldElement> for FieldElement {
@@ -69,6 +75,37 @@ impl ops::Add<FieldElement> for FieldElement {
 }
 
 impl ops::Mul<FieldElement> for FieldElement {
+    type Output = FieldElement;
+    
+    //https://stackoverflow.com/questions/12168348/ways-to-do-modulo-multiplication-with-primitive-types
+    fn mul(self, rhs: FieldElement) -> FieldElement {
+        
+        let mut a = self.value;
+        let mut b = rhs.value;
+        let mut res: u128 = 0;
+        let mut temp: u128 = 0;
+        
+        while a != 0 {
+            if ( (a & 1) != 0) {
+                
+                if (b >= P.wrapping_sub(res) ) {
+                    res = res.wrapping_sub(P);
+                }
+                res = res.wrapping_add(b);
+            }
+            a >>= 1;
+            
+            temp = b;
+            if ( b >= P.wrapping_sub(b)) {
+                temp = temp.wrapping_sub(P);
+            }
+            b = b.wrapping_add(temp);
+        }
+        return FieldElement::new(res);
+    }
+}
+
+impl ops::Mul<FieldElement> for &FieldElement {
     type Output = FieldElement;
     
     //https://stackoverflow.com/questions/12168348/ways-to-do-modulo-multiplication-with-primitive-types
