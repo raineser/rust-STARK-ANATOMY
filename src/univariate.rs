@@ -21,7 +21,7 @@ impl Polynomial {
         let zero = FieldElement::zero();
         
         if self.coefs == vec![zero; self.coefs.len()]{
-            return -2 as i128
+            return -1 as i128
         }
         
         let mut max = 0;
@@ -105,7 +105,50 @@ impl Polynomial {
         values
     }
     
+    pub fn interpolate_domain(domain: &Vec<FieldElement>, values: &Vec<FieldElement> ) -> Polynomial {
+        assert!(domain.len() == values.len());
+        assert!(domain.len() > 0);
+        
+        let mut acc = Polynomial::new(vec![FieldElement::new(0)]);
+        
+        for i in 0..domain.len() {
+            let mut prod = Polynomial::new(vec![values[i]]);
+            
+            for j in 0..domain.len() {
+                let x  = Polynomial::new(vec![FieldElement::zero(), FieldElement::one()]);
+                
+                if j == i {
+                    continue;
+                }
+                
+                prod = prod * ( (x - Polynomial::new(vec![domain[j]])) * Polynomial::new(vec![ (domain[i]-domain[j]).inverse()]) );
+            }
+            acc = acc + prod; 
+        }
+        acc
+    }
     
+    pub fn scale(&self, factor: FieldElement) -> Self{
+        
+        assert!(self.coefs.len() > 0);
+        
+        let mut scaled: Vec<FieldElement> = vec![];
+        
+        for i in 0..self.coefs.len() {
+            
+            scaled.push ((factor ^ i as u128) * self.coefs[i]);
+        }
+        
+        return Polynomial::new(scaled);
+    }
+    
+    pub fn test_colinearity(domain: Vec<FieldElement>, values: Vec<FieldElement> ) -> bool {
+        
+        let polynomial = Polynomial::interpolate_domain(&domain, &values);
+        
+        return polynomial.degree() <= 1;
+        
+    }
 }
     
 impl ops::Neg for Polynomial {
@@ -142,8 +185,6 @@ impl ops::Add for Polynomial {
         for i in 0..self.coefs.len() {
             coeffs[i] = coeffs[i] + self.coefs[i];
         }
-        
-        println!("{:?}", self.coefs);
         
         for i in 0..rhs.coefs.len() {
             coeffs[i] = coeffs[i] + rhs.coefs[i];
