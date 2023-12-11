@@ -4,8 +4,7 @@ pub struct Merkle {}
 
 impl Merkle {
     
-    
-    pub fn commit(leafs: Vec<[u8;32]>) -> Vec<[u8;32]> {
+    fn commit_(leafs: Vec<[u8;32]>) -> Vec<[u8;32]> {
         
         assert!(leafs.len() & (leafs.len() -1) == 0 );
         
@@ -17,7 +16,7 @@ impl Merkle {
             let second = leafs[..leafs.len()/2].to_vec();
             
             //gross
-            let hash = keccak256(&[Merkle::commit(second), Merkle::commit(first)].concat()[..].concat()[..]).to_vec();
+            let hash = keccak256(&[Merkle::commit_(second), Merkle::commit_(first)].concat()[..].concat()[..]).to_vec();
             let result: Vec<[u8;32]> = hash.chunks_exact(32).map(|chunk| {
                 let mut array: [u8;32] = [0;32];
                 array.copy_from_slice(chunk);
@@ -27,8 +26,22 @@ impl Merkle {
         }
     }
     
+    pub fn commit(leafs: &Vec<FieldElement>) -> [u8;32] {
+        
+        let mut formatted_leafs: Vec<[u8;32]> = vec![];
+        
+        for i in 0..leafs.len() {
+            formatted_leafs[i] = keccak256( &leafs[i].clone().value.to_be_bytes()[..] );
+        }
+        
+        let root = Merkle::commit_(formatted_leafs); 
+        
+        return root[0].clone();
+        
+    }
+    
      
-    pub fn open(index: usize, leafs: Vec<[u8;32]> ) -> Vec<[u8;32]> {
+    fn open_(index: usize, leafs: Vec<[u8;32]> ) -> Vec<[u8;32]> {
         
         assert!(leafs.len() & (leafs.len()-1) == 0);
         assert!(0 <= index && index < leafs.len());
@@ -42,18 +55,18 @@ impl Merkle {
             let first = leafs[leafs.len()/2..].to_vec();
             let second = leafs[..leafs.len()/2].to_vec();
             
-            return [Merkle::open(index,second) , Merkle::commit(first)].concat();
+            return [Merkle::open_(index,second) , Merkle::commit_(first)].concat();
             
         }else {
             
             let first = leafs[leafs.len()/2..].to_vec();
             let second = leafs[..leafs.len()/2].to_vec();
             
-            return [Merkle::open(index - leafs.len()/ 2 ,first) , Merkle::commit(second)].concat();
+            return [Merkle::open_(index - leafs.len()/ 2 ,first) , Merkle::commit_(second)].concat();
         }
     }
     
-    pub fn verify (root: [u8;32], index: usize, path: Vec<[u8;32]>, leaf: [u8;32]) -> bool {
+    fn verify_(root: [u8;32], index: usize, path: Vec<[u8;32]>, leaf: [u8;32]) -> bool {
         
         assert!(0 <= index && index < (1 << path.len()));
         
@@ -70,10 +83,10 @@ impl Merkle {
         } else {
             
             if index % 2 == 0 {
-                return Merkle::verify(root, index >>1, path[1..].to_vec(), keccak256(&[leaf, path[0]].concat()[..]))
+                return Merkle::verify_(root, index >>1, path[1..].to_vec(), keccak256(&[leaf, path[0]].concat()[..]))
             } else {
-                return Merkle::verify(root, index >>1, path[1..].to_vec(), keccak256(&[path[0], leaf].concat()[..]))
+                return Merkle::verify_(root, index >>1, path[1..].to_vec(), keccak256(&[path[0], leaf].concat()[..]))
             }
         }
-    }
+    }   
 }
