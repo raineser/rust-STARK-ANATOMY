@@ -41,11 +41,14 @@ impl FieldElement {
         root
     }
     
-    pub fn sample() -> FieldElement {
+    pub fn sample(byte_array: &[u8;32]) -> FieldElement {
+        let mut acc = FieldElement::one();
         
-        let mut rng = rand::thread_rng();
-        return FieldElement::new(rng.gen_range(1..P));
-        
+        for b in 0..byte_array.len() {
+            
+            acc = (acc * FieldElement::new(256)) ^ (byte_array[b] as u128);
+        }
+        acc
     }
     
     pub fn is_zero(&self) -> bool {
