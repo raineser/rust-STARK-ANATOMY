@@ -1,10 +1,12 @@
+
 #[derive(Debug)]
 pub struct Merkle {}
 
 
 impl Merkle {
     
-    fn commit_(leafs: Vec<[u8;32]>) -> Vec<[u8;32]> {
+    
+    pub fn commit_(leafs: Vec<[u8;32]>) -> Vec<[u8;32]> {
         
         assert!(leafs.len() & (leafs.len() -1) == 0 );
         
@@ -31,7 +33,7 @@ impl Merkle {
         let mut formatted_leafs: Vec<[u8;32]> = vec![];
         
         for i in 0..leafs.len() {
-            formatted_leafs[i] = keccak256( &leafs[i].clone().value.to_be_bytes()[..] );
+            formatted_leafs.push(keccak256( &leafs[i].clone().value.to_be_bytes()[..] ));
         }
         
         let root = Merkle::commit_(formatted_leafs); 
@@ -41,7 +43,7 @@ impl Merkle {
     }
     
      
-    fn open_(index: usize, leafs: Vec<[u8;32]> ) -> Vec<[u8;32]> {
+    pub fn open_(index: usize, leafs: Vec<[u8;32]> ) -> Vec<[u8;32]> {
         
         assert!(leafs.len() & (leafs.len()-1) == 0);
         assert!(0 <= index && index < leafs.len());
@@ -66,7 +68,23 @@ impl Merkle {
         }
     }
     
-    fn verify_(root: [u8;32], index: usize, path: Vec<[u8;32]>, leaf: [u8;32]) -> bool {
+    pub fn open(index: usize, leafs: &Vec<FieldElement> ) -> Vec<[u8;32]> {
+        
+        let mut formatted_leafs: Vec<[u8;32]> = vec![];  
+        
+         
+        for i in 0..leafs.len() {
+            formatted_leafs.push(keccak256( &leafs[i].clone().value.to_be_bytes()[..] ));
+        }
+        
+        let path = Merkle::open_(index, formatted_leafs);
+        
+        path
+        
+    }
+    
+    
+    pub fn verify_(root: [u8;32], index: usize, path: Vec<[u8;32]>, leaf: [u8;32]) -> bool {
         
         assert!(0 <= index && index < (1 << path.len()));
         
@@ -88,9 +106,17 @@ impl Merkle {
                 return Merkle::verify_(root, index >>1, path[1..].to_vec(), keccak256(&[path[0], leaf].concat()[..]))
             }
         }
-    }   
+    }
+    
+    pub fn verify(root: [u8;32], index: usize, path: Vec<[u8;32]>, leaf: FieldElement) -> bool {
+        
+        
+        let hash_leaf = keccak256( &leaf.value.to_be_bytes()[..]);
+        
+        return Merkle::verify_(root, index, path, hash_leaf);
+    }
+    
 }
-
 
 
 // Tests
