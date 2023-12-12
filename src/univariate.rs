@@ -295,3 +295,135 @@ impl PartialEq for Polynomial  {
     }
     
 }
+
+
+// Tests
+use rand::Rng;
+use rand::RngCore;
+use rand::rngs::OsRng;
+
+pub fn test_distributivity() {
+    
+    let zero = FieldElement::zero();
+    let one = FieldElement::one();
+    let two = FieldElement::new(2);
+    let five = FieldElement::new(5);
+    
+    let a = Polynomial::new(vec![one, zero, five, two]);
+    let b = Polynomial::new(vec![two, two, one]);
+    let c = Polynomial::new(vec![zero, five, two, five, five, one]);
+    
+    let lhs = a.clone() * (b.clone() + c.clone());
+    let rhs = a.clone() * b.clone()  + a.clone() * c.clone();
+    
+    assert!(lhs == rhs);
+    
+    println!("univariate polynomial distributivity success \\o/")
+}
+
+pub fn test_divsion() {
+
+    let zero = FieldElement::zero();
+    let one = FieldElement::one();
+    let two = FieldElement::new(2);
+    let five = FieldElement::new(5);
+    
+    let a = Polynomial::new(vec![one, zero, five, two]);
+    let b = Polynomial::new(vec![two, two, one]);
+    let c = Polynomial::new(vec![zero, five, two, five, five, one]);
+    
+    // a should divide a*b, quotient should be b
+    let (quo, rem) = Polynomial::divide( &(a.clone() * b.clone()), &a);
+    assert!(rem.is_zero(), "fail division test 1");
+    assert!(quo == b, "fail division test 2");
+    
+    // b should divide a*b, quotient should be a
+    let (quo, rem) = Polynomial::divide( &(a.clone() * b.clone()), &b);
+    assert!(rem.is_zero(), "fail division test 3");
+    assert!(quo == a, "fail division test 4");
+    
+    // c should not divide a*b
+    let (quo, rem) = Polynomial::divide( &(a.clone() * b.clone()), &c);
+    assert!(!rem.is_zero(), "fail division test 5");
+    
+    
+    // ... but quo * c + rem == a*b
+    assert!(quo.clone() * c.clone() + rem.clone()    == a.clone() * b.clone(),  "fail division test 6");
+    
+    println!("univariate polynomial division success \\o/");
+    
+}
+
+pub fn test_interpolate() {
+    
+    let zero = FieldElement::zero();
+    let one = FieldElement::one();
+    let two = FieldElement::new(2);
+    let five = FieldElement::new(5);
+    
+    let values = vec![five, two, two, one, five, zero];
+    let mut domain = vec![];
+    for i in 1..6 {
+        domain.push(FieldElement::new(i as u128));
+    }
+    
+    let poly = Polynomial::interpolate_domain(&domain, &values);
+    
+    for i in 0..domain.len() {
+        assert!(poly.evaluate(domain[i]) == values[i], "fail interpolate test 1");
+    }
+    
+    // evaluation in random point is nonzero with high probability
+    assert!(poly.evaluate(FieldElement::new(363)) != zero, "fail interpolate test 2");
+    
+    assert!( poly.degree() == (domain.len()-1) as i128, "fail interpolate test 3");
+    
+    println!("univariate polynomial interpolate success \\o/");
+}
+
+
+pub fn test_zerofier() {
+
+    
+    
+    for trial in 0..100 {
+        let mut rng = rand::thread_rng();
+        
+        let degree:u8 = rng.gen();
+        
+        
+        let mut domain: Vec<FieldElement> = vec![];
+        
+        while domain.len() != degree as usize {
+        
+            let mut fake_index = [0u8;32];
+            OsRng.fill_bytes(&mut fake_index);
+            let new = FieldElement::sample(&fake_index);
+            
+            domain.push(new.clone());
+            
+            
+        }
+        
+        let zerofier = Polynomial::zerofier_domain(&domain);
+        
+        assert!(zerofier.degree()  == degree as i128, "zerofier has degree unequal to size of domain");
+        
+        for d in 0..domain.len() {
+            
+            assert!(zerofier.evaluate(domain[d]) == FieldElement::zero(), "zerofier has degree unequal to size of domain");
+        }
+        
+        let mut fake_index = [0u8;32];
+        OsRng.fill_bytes(&mut fake_index);
+        
+        // Almost no chance of collision here
+        let random = FieldElement::sample(&fake_index);
+        
+        assert!(zerofier.evaluate(random.clone()) != FieldElement::zero(), "zerofier evaluates to zero where it should not");
+        
+        
+    }
+    println!("univariate zerofier test success \\o/");
+}
+
