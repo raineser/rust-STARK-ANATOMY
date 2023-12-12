@@ -149,6 +149,18 @@ impl Polynomial {
         return polynomial.degree() <= 1;
         
     }
+
+     pub fn zerofier_domain(domain: &Vec<FieldElement>) -> Polynomial {
+        
+        let x = Polynomial::new(vec![FieldElement::zero(), FieldElement::one()]);
+        let mut acc = Polynomial::new(vec![FieldElement::one()]);
+        
+        for d in 0..domain.len() {
+            
+            acc = acc.clone() * (x.clone() - Polynomial::new(vec![domain[d]]));
+        }
+        acc
+    }
 }
     
 impl ops::Neg for Polynomial {
