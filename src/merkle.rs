@@ -1,7 +1,8 @@
+use crate::algebra::FieldElement;
+use crate::keccak::keccak256;
 
 #[derive(Debug)]
 pub struct Merkle {}
-
 
 impl Merkle {
     
@@ -119,75 +120,81 @@ impl Merkle {
 }
 
 
-// Tests
-use rand::RngCore;
-use rand::rngs::OsRng;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::RngCore;
+    use rand::rngs::OsRng;
+    use crate::algebra::FieldElement;
+    
 
-
-fn random_leaf() -> FieldElement {
-    let mut value = [0u8; 16];
-    OsRng.fill_bytes(&mut value);
     
-    return FieldElement::new(u128::from_be_bytes(value));
-}
-
-fn merkle() {
-    
-    let n:usize = 64;
-    
-    let mut leafs: Vec<FieldElement> = vec![];
-    
-    for i in 0..n {
-        leafs.push(random_leaf());
-    }
-    
-    let root = Merkle::commit(&leafs);
-    
-    // opening any leaf should work
-    for i in 0..n {
-    
-        let path = Merkle::open(i,&leafs);
-        assert!(Merkle::verify(root, i, path, leafs[i]));
-    }
-    
-    // opening non-leafs should not work
-    
-    for i in 0..n {
-        let path = Merkle::open(i, &leafs);
-        assert!(false == Merkle::verify(root,i,path,random_leaf()));
-    }
-    
-    // opening wrong leafs should not work
-    
-    for i in 0..n {
-        let path = Merkle::open(i, &leafs);
-        assert!(false == Merkle::verify(root, i, path, leafs[(i+1) % 64]));
-    }
-    
-    // opening leafs with the wrong index should not work
-     for i in 0..n {
-        let path = Merkle::open(i, &leafs);
-        assert!(false == Merkle::verify(root, (i+1) % 64, path, leafs[i]));
+    fn random_leaf() -> FieldElement {
+        let mut value = [0u8; 16];
+        OsRng.fill_bytes(&mut value);
+        
+        return FieldElement::new(u128::from_be_bytes(value));
     }
 
-    //opening leafs to a false root should not work
-    for i in 0..n {
-        let path = Merkle::open(i, &leafs);
-        let mut fake_root = [0u8;32];
-        OsRng.fill_bytes(&mut fake_root);
-        assert!(false == Merkle::verify(fake_root, i, path, leafs[i]));
-    }
-    
-    // opening leafs with even one falsehood in the path should not work
-    for i in 0..n {
-        let path = Merkle::open(i, &leafs);
-        for j in 0..path.len() {
-            let mut fake_index = [0u8;32];
-            OsRng.fill_bytes(&mut fake_index);
-            
-            let mut fake_path = path.clone();
-            fake_path[j] = fake_index;
-            assert!(false == Merkle::verify(root, i, fake_path, leafs[i]));
+    #[test]
+    fn merkle() {
+        
+        let n:usize = 64;
+        
+        let mut leafs: Vec<FieldElement> = vec![];
+        
+        for i in 0..n {
+            leafs.push(random_leaf());
+        }
+        
+        let root = Merkle::commit(&leafs);
+        
+        // opening any leaf should work
+        for i in 0..n {
+        
+            let path = Merkle::open(i,&leafs);
+            assert!(Merkle::verify(root, i, path, leafs[i]));
+        }
+        
+        // opening non-leafs should not work
+        
+        for i in 0..n {
+            let path = Merkle::open(i, &leafs);
+            assert!(false == Merkle::verify(root,i,path,random_leaf()));
+        }
+        
+        // opening wrong leafs should not work
+        
+        for i in 0..n {
+            let path = Merkle::open(i, &leafs);
+            assert!(false == Merkle::verify(root, i, path, leafs[(i+1) % 64]));
+        }
+        
+        // opening leafs with the wrong index should not work
+        for i in 0..n {
+            let path = Merkle::open(i, &leafs);
+            assert!(false == Merkle::verify(root, (i+1) % 64, path, leafs[i]));
+        }
+
+        //opening leafs to a false root should not work
+        for i in 0..n {
+            let path = Merkle::open(i, &leafs);
+            let mut fake_root = [0u8;32];
+            OsRng.fill_bytes(&mut fake_root);
+            assert!(false == Merkle::verify(fake_root, i, path, leafs[i]));
+        }
+        
+        // opening leafs with even one falsehood in the path should not work
+        for i in 0..n {
+            let path = Merkle::open(i, &leafs);
+            for j in 0..path.len() {
+                let mut fake_index = [0u8;32];
+                OsRng.fill_bytes(&mut fake_index);
+                
+                let mut fake_path = path.clone();
+                fake_path[j] = fake_index;
+                assert!(false == Merkle::verify(root, i, fake_path, leafs[i]));
+            }
         }
     }
 }

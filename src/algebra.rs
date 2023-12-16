@@ -5,7 +5,7 @@ const P:u128 = 1 + 407 * ( 1 << 119 );
 
 
 #[derive(Debug, Copy, Clone)]
-struct FieldElement {
+pub struct FieldElement {
     pub value: u128,
     prime: u128,
 }
