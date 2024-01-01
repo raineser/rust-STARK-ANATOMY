@@ -1,10 +1,11 @@
 use std::ops;
 use rand::Rng;
+use serde_derive::{Deserialize, Serialize};
 
 const P:u128 = 1 + 407 * ( 1 << 119 );
 
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub struct FieldElement {
     pub value: u128,
     prime: u128,
@@ -59,6 +60,15 @@ impl FieldElement {
         let a = inv(self.value);
         assert!(FieldElement::new(a) * self == FieldElement::one());
         return FieldElement::new(a);
+    }
+}
+
+impl PartialEq<FieldElement> for FieldElement {
+
+    fn eq(&self, other: &Self) -> bool {
+
+        self.value == other.value
+        
     }
 }
 
@@ -195,14 +205,7 @@ impl ops::Div for FieldElement {
     } 
 }
 
-impl PartialEq for FieldElement  {
-    
-    fn eq(&self, other: &Self) -> bool {
-        
-        return self.value == other.value;
-    }
-    
-}
+
 
 //https://github.com/facebook/winterfell/blob/main/math/src/field/f128/mod.rs
 fn sub_192x192(a0: u64, a1: u64, a2: u64, b0: u64, b1: u64, b2: u64) -> (u64, u64, u64) {

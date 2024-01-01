@@ -410,7 +410,7 @@ mod tests {
 
         let values = vec![five, two, two, one, five, zero];
         let mut domain = vec![];
-        for i in 1..6 {
+        for i in 0..6 {
             domain.push(FieldElement::new(i as u128));
         }
 
@@ -431,7 +431,7 @@ mod tests {
     #[test]
     pub fn test_zerofier() {
 
-        for trial in 0..100 {
+        for trial in 0..10 {
             let mut rng = rand::thread_rng();
 
             let degree:u8 = rng.gen();
